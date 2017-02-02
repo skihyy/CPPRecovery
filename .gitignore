@@ -27,6 +27,7 @@
 *.exe
 *.out
 *.app
+executable
 
 # JetBrain Files
 /.idea

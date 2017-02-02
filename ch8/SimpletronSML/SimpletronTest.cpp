@@ -1,3 +1,6 @@
+//
+// Created by Yuyang He on 2017/2/2.
+//
 #include<iostream>
 #include"Simpletron.h"
 
@@ -5,24 +8,12 @@ using namespace std;
 
 int main ( )
 {
+    int orders[9] = { 1009, 1010, 2009, 3110, 4107, 1109, 4300, 1110, 4300 };
+
     Simpletron simpletron;
-
-    int order;
-    const int size = 1;
-    int orders[1];
-
-    while ( true )
-    {
-        cout<<"Test mode, enter order (-1 to quit): ";
-        cin>>order;
-        if(-1 == order)
-        {
-            break;
-        }
-        orders[0] = order;
-        simpletron.takeProgram (orders, size);
-        //simpletron.displayDetails ();
-    }
+    simpletron.takeProgram ( orders, 9 );
+    simpletron.displayDetails ( );
 
     return 0;
 }
+

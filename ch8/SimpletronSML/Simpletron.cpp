@@ -33,52 +33,54 @@ bool Simpletron::takeProgram ( const int *orders, const int size )
     }
 
     int tmp_order;
-    for ( size_t i = 0;
-          i < size;
-          i++ )
+    for ( size_t i = 0; i < size; i++ )
     {
         tmp_order = orders[ i ];
-        if ( tmp_order >= 0 )
-        {
-            if ( 10000 > tmp_order )
-            {
-                cout << "Warning: too long order in " << tmp_order << ", only last 5 digits will be received." << endl;
-                tmp_order %= 10000;
-            }
-            registers[ i ][ 0 ] = 1; // 1 -> positive
-        }
-        else
-        {
-            if ( -10000 < tmp_order )
-            {
-                cout << "Warning: too long order in " << tmp_order << ", only last 5 digits will be received." << endl;
-                tmp_order %= 10000;
-            }
-            tmp_order *= -1;
-            registers[ i ][ 0 ] = 0; // 0 -> negative
-        }
-        registers[ i ][ 2 ] = tmp_order % 100;
-        tmp_order /= 100;
-        registers[ i ][ 1 ] = tmp_order;
+        this->storeOneOrder ( tmp_order, i );
     }
 
     return this->startProgram ( );
 }
 
+void Simpletron::storeOneOrder ( int order, const int pos )
+{
+    if ( order >= 0 )
+    {
+        if ( 10000 < order )
+        {
+            cout << "Warning: too long order in " << order << ", only last 5 digits will be received." << endl;
+            order %= 10000;
+        }
+        registers[ pos ][ 0 ] = 1; // 1 -> positive
+    }
+    else
+    {
+        if ( -10000 < order )
+        {
+            cout << "Warning: too long order in " << order << ", only last 5 digits will be received." << endl;
+            order %= 10000;
+        }
+        order *= -1;
+        registers[ pos ][ 0 ] = 0; // 0 -> negative
+    }
+    registers[ pos ][ 2 ] = order % 100;
+    order /= 100;
+    registers[ pos ][ 1 ] = order;
+}
+
 bool Simpletron::startProgram ( )
 {
     int cmd, pos;
-    for ( size_t i = 0;
-          i < this->rowSize;
-          i++ )
+    for ( size_t i = 0; i < this->rowSize; i++ )
     {
         if ( 1 == this->registers[ i ][ 0 ] )
         {
-            cmd = registers[ i ][ 1 ];
-            pos = registers[ i ][ 2 ];
+            cmd = this->registers[ i ][ 1 ];
+            pos = this->registers[ i ][ 2 ];
             if ( !takeCmd ( cmd, pos ) )
             {
-                cout << "Warning: failed to run command \"+" << cmd << pos << "\"" << endl;
+                cout << "Warning: failed to run command at position " << setw ( 2 ) << setfill ( '0' ) << i << ": \"+"
+                     << setw ( 2 ) << setfill ( '0' ) << cmd << setw ( 2 ) << setfill ( '0' ) << pos << "\"" << endl;
             }
         }
     }
@@ -87,17 +89,43 @@ bool Simpletron::startProgram ( )
 
 void Simpletron::displayDetails ( )
 {
-    cout << "Current add machine: " << this->addMachine << endl;
+    cout << setw ( 20 ) << "Current add machine: " << this->addMachine << endl << "Memory: " << endl;
+
+    // table header
+    cout << setw ( 2 ) << setfill ( ' ' ) << " ";
+    for ( int i = 0; i < 10; i++ )
+    {
+        cout << setw ( 6 ) << i;
+    }
+    cout << endl;
 
     for ( size_t i = 0; i < this->rowSize; i++ )
     {
-        this->write ( i );
+        if ( 0 == i % 10 )
+        {
+            cout << setw ( 2 ) << i;
+        }
+
+        cout << setw ( 1 ) << " " << setw ( 1 ) << ( 1 == this->registers[ i ][ 0 ] ? "+" : "-" ) << setw ( 2 )
+             << setfill ( '0' ) << this->registers[ i ][ 1 ] << setw ( 2 ) << setfill ( '0' )
+             << this->registers[ i ][ 2 ];
+
+        if ( 9 == i % 10 )
+        {
+            cout << endl;
+        }
     }
+}
+
+bool Simpletron::debug ( const int order, const int pos )
+{
+    this->storeOneOrder ( order, pos );
+    return this->takeCmd ( this->registers[ pos ][ 1 ], this->registers[ pos ][ 2 ] );
 }
 
 bool Simpletron::takeCmd ( const int cmd, const int pos )
 {
-    cout << "Test mode, cmd: " << cmd << ", pos: " << pos << endl;
+    //cout << "Test mode, cmd: " << cmd << ", pos: " << pos << endl;
     switch ( cmd )
     {
         case Simpletron::READ:
@@ -139,6 +167,8 @@ bool Simpletron::read ( const int pos )
     }
     cout << pos << "." << endl << "If longer than 5 characters, only the first 5 will be received: " << endl;
     int num;
+    cin.clear ( ); // clear failure state flags on cin
+    //cin.ignore ( std::numeric_limits < std::streamsize >::max ( ), '\n' );
     cin >> num;
 
     // put into registers
@@ -159,7 +189,8 @@ bool Simpletron::read ( const int pos )
 
 bool Simpletron::write ( const int pos )
 {
-    cout << "Register at " << pos << ": " << ( 1 == this->registers[ pos ][ 0 ] ? "+" : "-" );
+    cout << "Register at " << setw ( 2 ) << pos << setw ( 3 ) <<
+         ": " << ( 1 == this->registers[ pos ][ 0 ] ? "+" : "-" );
     if ( 10 > this->registers[ pos ][ 1 ] )
     {
         cout << 0;
@@ -186,6 +217,7 @@ bool Simpletron::load ( const int pos )
 
 bool Simpletron::store ( const int pos )
 {
+    int tmp = this->addMachine;
     if ( 0 <= addMachine )
     {
         this->registers[ pos ][ 0 ] = 1;
@@ -193,10 +225,11 @@ bool Simpletron::store ( const int pos )
     else
     {
         this->registers[ pos ][ 0 ] = 0;
+        tmp *= -1;
     }
 
-    this->registers[ pos ][ 1 ] = this->addMachine / 100;
-    this->registers[ pos ][ 2 ] = this->addMachine % 100;
+    this->registers[ pos ][ 1 ] = tmp / 100;
+    this->registers[ pos ][ 2 ] = tmp % 100;
 
     return true;
 }

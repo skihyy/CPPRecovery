@@ -10,32 +10,20 @@ private:
     int addMachine;
 
     bool startProgram ( );
-
     bool takeCmd ( const int, const int );
-
     bool read ( const int );
-
     bool write ( const int );
-
     bool load ( const int );
-
     bool store ( const int );
-
     bool add ( const int );
-
     bool substract ( const int );
-
     bool devide ( const int );
-
     bool multiply ( const int );
-
     bool branch ( const int );
-
     bool branchNeg ( const int );
-
     bool branchZero ( const int );
-
     int getData ( const int );
+    void storeOneOrder ( int, const int );
 
 public:
     // IO
@@ -61,8 +49,7 @@ public:
     Simpletron ( );
 
     bool takeProgram ( const int *, const int );
-
+    bool debug ( const int, const int );
     void displayDetails ( );
-
     bool cleanAll ( );
 };
